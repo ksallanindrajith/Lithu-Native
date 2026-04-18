@@ -1,7 +1,24 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
+
+if (typeof window !== 'undefined') {
+  try {
+    const originalFetch = window.fetch;
+    Object.defineProperty(window, 'fetch', {
+      get: () => originalFetch,
+      set: (val) => {
+        console.warn('Something tried to reassign window.fetch, ignoring.');
+      },
+      configurable: true,
+      enumerable: true
+    });
+  } catch (e) {
+    console.error('Could not redefine window.fetch', e);
+  }
+}
+
 import { 
   Plane, 
   Check, 
@@ -100,7 +117,7 @@ const TIERS: ServiceTier[] = [
     id: 'softlanding',
     name: 'Native Integration',
     price: 115,
-    description: 'Live like a native from day one. Full support until you leave.',
+    description: 'Land Smart. Live Local. from day one. Full support until you leave.',
     features: [
       'All Welcome Plus Features',
       'Bank Setup (Physical Support)',
@@ -117,6 +134,10 @@ const DISCOUNTS: Discount[] = [
   { id: 'd2', category: 'Food', partner: 'Local Restaurants', value: '15% Off Total Bill', icon: <Utensils size={20} /> },
   { id: 'd3', category: 'Stay', partner: 'Partner Hotels', value: '10% Cashback', icon: <Hotel size={20} /> },
   { id: 'd4', category: 'Travel', partner: 'LTG Railways', value: 'Student & Group Rates', icon: <Ticket size={20} /> },
+  { id: 'd5', category: 'Groceries', partner: 'Maxima', value: 'Double Loyalty Points', icon: <ShoppingBag size={20} /> },
+  { id: 'd6', category: 'Food Delivery', partner: 'Wolt', value: '€10 Off First Order', icon: <Utensils size={20} /> },
+  { id: 'd7', category: 'Banking', partner: 'Revolut', value: 'Premium Trial', icon: <Landmark size={20} /> },
+  { id: 'd8', category: 'Furniture', partner: 'IKEA', value: 'Free Delivery', icon: <Home size={20} /> },
 ];
 
 const ADDONS: Addon[] = [
@@ -336,6 +357,9 @@ const ChatWidget: React.FC = () => {
 
 // --- MAIN APP ---
 const App: React.FC = () => {
+  const { scrollY } = useScroll();
+  const heroImageY = useTransform(scrollY, [0, 500], [0, 100]);
+
   const [booking, setBooking] = useState<BookingState>({
     tierId: 'mcwelcome',
     addons: [],
@@ -345,6 +369,7 @@ const App: React.FC = () => {
   });
 
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [showAllDiscounts, setShowAllDiscounts] = useState(false);
 
   const totalPrice = useMemo(() => {
     const tier = TIERS.find(t => t.id === booking.tierId);
@@ -416,8 +441,8 @@ const App: React.FC = () => {
               <Sparkles size={14} /> Official Arrival Partner
             </div>
             <h1 className="text-6xl lg:text-8xl font-black text-blue-950 leading-[0.95]">
-              Live Like a <br />
-              <span className="text-blue-600">Native</span>
+              Land Smart. <br />
+              <span className="text-blue-600">Live Local.</span>
             </h1>
             <p className="text-xl text-blue-800/80 font-medium leading-relaxed max-w-xl">
               Safe. Reliable. Personal. Full guidance for students, business, and tourists until you leave Lithuania. English-speaking Bolt drivers waiting for you.
@@ -432,15 +457,21 @@ const App: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9, x: 30 }}
             animate={{ opacity: 1, scale: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="flex-1 relative"
+            className="flex-1 relative group"
+            style={{ y: heroImageY }}
           >
             <div className="absolute -inset-4 bg-blue-100/50 blur-3xl rounded-full" />
-            <img 
-              src="https://picsum.photos/seed/student-arrival/1200/800" 
-              alt="International Student Arrival" 
-              referrerPolicy="no-referrer"
-              className="rounded-[60px] shadow-3xl relative z-10 w-full object-cover h-[550px] border-8 border-white"
-            />
+            <motion.div
+              whileHover={{ scale: 1.05, rotate: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <img 
+                src="https://picsum.photos/seed/student-arrival/1200/800" 
+                alt="International Student Arrival" 
+                referrerPolicy="no-referrer"
+                className="rounded-[60px] shadow-3xl relative z-10 w-full object-cover h-[550px] border-8 border-white transition-transform duration-700"
+              />
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -572,9 +603,9 @@ const App: React.FC = () => {
       </section>
 
       {/* Builder Section */}
-      <section id="builder" className="py-32 bg-blue-950 text-white relative overflow-hidden scroll-mt-20">
+      <section id="builder" className="py-32 bg-blue-950 text-white relative scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-24 items-start">
+          <div className="grid lg:grid-cols-2 gap-24">
             <motion.div 
               initial={{ opacity: 0, x: -40 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -669,14 +700,15 @@ const App: React.FC = () => {
               </div>
             </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="lg:sticky lg:top-32"
-            >
-              <div className="bg-white rounded-[50px] p-12 text-blue-950 shadow-2xl border border-blue-50">
+            <div className="relative h-full">
+              <div className="lg:sticky lg:top-32">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8 }}
+                >
+                  <div className="bg-white rounded-[50px] p-12 text-blue-950 shadow-2xl border border-blue-50">
                 <h3 className="text-3xl font-black mb-10 text-blue-900 uppercase tracking-tighter">Your Arrival Summary</h3>
                 <div className="space-y-4 mb-8">
                   <div className="flex justify-between items-center">
@@ -725,12 +757,14 @@ const App: React.FC = () => {
                 </p>
               </div>
             </motion.div>
+            </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Discounts Section */}
-      <section id="discounts" className="py-32 bg-white scroll-mt-20">
+      <section id="discounts" className="pt-32 pb-16 bg-white scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
@@ -743,13 +777,13 @@ const App: React.FC = () => {
             <p className="text-blue-800/60 max-w-2xl mx-auto font-medium text-lg">Save on food, transport, and stays with our partner network.</p>
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {DISCOUNTS.map((discount, index) => (
+            {(showAllDiscounts ? DISCOUNTS : DISCOUNTS.slice(0, 4)).map((discount, index) => (
               <motion.div 
                 key={discount.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
+                transition={{ duration: 0.5, delay: (index % 4) * 0.05 }}
                 className="bg-blue-50/50 p-8 rounded-[40px] border border-blue-100 hover:shadow-xl transition-all group"
               >
                 <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-700 mb-6 shadow-sm group-hover:scale-110 transition-transform">
@@ -762,15 +796,18 @@ const App: React.FC = () => {
             ))}
           </div>
           <div className="mt-16 text-center">
-            <button className="px-10 py-4 bg-blue-50 text-blue-700 font-black rounded-2xl hover:bg-blue-100 transition-colors uppercase tracking-widest text-sm">
-              View All 50+ Discounts
+            <button 
+              onClick={() => setShowAllDiscounts(!showAllDiscounts)}
+              className="px-10 py-4 bg-blue-50 text-blue-700 font-black rounded-2xl hover:bg-blue-100 transition-colors uppercase tracking-widest text-sm"
+            >
+              {showAllDiscounts ? 'Show Less' : 'View All 50+ Discounts'}
             </button>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-32 bg-white scroll-mt-20">
+      <section id="faq" className="pt-16 pb-32 bg-white scroll-mt-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}

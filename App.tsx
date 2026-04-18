@@ -98,8 +98,8 @@ const App: React.FC = () => {
               <Sparkles size={14} /> Official Arrival Partner
             </div>
             <h1 className="text-6xl lg:text-8xl font-black text-blue-950 leading-[0.95]">
-              Live Like a <br />
-              <span className="text-blue-600">Native</span>
+              Land Smart. <br />
+              <span className="text-blue-600">Live Local.</span>
             </h1>
             <p className="text-xl text-blue-800/80 font-medium leading-relaxed max-w-xl">
               Safe. Reliable. Personal. Full guidance for students, business, and tourists until you leave Lithuania. English-speaking Bolt drivers waiting for you.

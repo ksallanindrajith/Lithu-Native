@@ -37,7 +37,7 @@ export const TIERS: ServiceTier[] = [
     id: 'softlanding',
     name: 'Native Integration',
     price: 139,
-    description: 'Live like a native from day one. Full support until you leave.',
+    description: 'Land Smart. Live Local. from day one. Full support until you leave.',
     features: [
       'All Welcome Plus Features',
       'Bank Setup (Physical Support)',
